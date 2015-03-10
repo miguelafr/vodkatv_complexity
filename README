@@ -1,0 +1,57 @@
+Prerequisites
+-------------
+
+- Java 6 or 7
+- PostgreSQL 9
+
+The following environment variables will be used in the rest of this document:
+
+- ${VODKATV_COMPLEXITY_HOME}: Path to the folder where the repository
+  "vodkatv_complexity" was downloaded.
+
+- ${COMPLEXITY_HOME}: Path to the folder where the repository "complexity"
+  was downloaded.
+
+Database
+--------
+
+- Install PostgreSQL 9 database
+
+- Create a user "tahiti" and a database "tahiti"
+
+- Create the initial structure:
+
+  $ ${VODKATV_COMPLEXITY_HOME}/db
+  $ pg_restore --no-acl -h localhost -U tahiti -W -d tahiti vodkatv_db.tar
+
+Building
+--------
+
+- Mount vodkatv_repository into the examples directory of the complexity
+  repository
+
+  $ mkdir -p ${COMPLEXITY_HOME}/examples/vodkatv
+  $ sudo mount -o bind ${VODKATV_COMPLEXITY_HOME} ${COMPLEXITY_HOME}/examples/vodkatv
+
+- Modify Makefile of ${COMPLEXITY_HOME}/examples/ so that the vodkatv folder is
+  taken into account
+
+  SUBDIRS = erlang java vodkatv
+
+- Compile with make
+
+  $ cd ${COMPLEXITY_HOME}
+  $ make
+
+Running example
+---------------
+
+  $ cd ${COMPLEXITY_HOME}
+  $ cd ebin 
+  $ erl
+  > vodkatv_channels:measure().
+
+
+
+
+

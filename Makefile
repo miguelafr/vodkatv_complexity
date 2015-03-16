@@ -1,6 +1,5 @@
 
-all: vodkatv/com/lambdastream/tahiti/model/configuration/channelconfigfacade/plain/actions/FindChannelsDataAction.class \
-	src/VoDKATVChannels.class \
+all:	src/VoDKATVChannels.class \
 	erl/vodkatv_channels.beam
 
 %.beam: %.erl

@@ -23,16 +23,16 @@ grow_epg({NumChannels, _NumEPGChannels}) ->
 %% Eval cmds functions
 %%
 eval_cmds_channels(NumChannels) ->
-    SetupCommands = get_setup_commands(0),
+    SetupCommands = get_setup_commands_channels(),
     RunCommands = get_run_commands_channels(NumChannels),
-    TearDownCommands = get_teardown_commands(),
+    TearDownCommands = get_teardown_commands_channels(),
     measure_java:run_java_commands(false, 5, SetupCommands,
         lists:flatten(RunCommands), TearDownCommands).
 
 eval_cmds_epg({NumChannels, NumEPGChannels}) ->
-    SetupCommands = get_setup_commands(NumEPGChannels),
+    SetupCommands = get_setup_commands_epg(NumEPGChannels),
     RunCommands = get_run_commands_epg(NumChannels),
-    TearDownCommands = get_teardown_commands(),
+    TearDownCommands = get_teardown_commands_epg(),
     measure_java:run_java_commands(false, 5, SetupCommands,
         lists:flatten(RunCommands), TearDownCommands).
 
@@ -57,7 +57,7 @@ get_java_code(Commands) ->
     "}"].
 
 %%
-%% Java commands
+%% Java commands channels
 %%
 get_run_commands_channels(NumChannels) ->
     Commands = get_java_code([
@@ -65,32 +65,63 @@ get_run_commands_channels(NumChannels) ->
     ]),
     lists:flatten(Commands).
 
+get_setup_commands_channels() ->
+    Commands = get_java_code([
+        ";"
+    ]),
+    lists:flatten(Commands).
+
+get_teardown_commands_channels() ->
+    Commands = get_java_code([
+        ";"
+    ]),
+    lists:flatten(Commands).
+
+global_setup_channels() ->
+    Commands = get_java_code([
+        "v.globalSetUp(false);",
+        "v.setUp(0);"
+    ]),
+    measure_java:run_java_commands(false, 1, null,
+        lists:flatten(Commands), null).
+
+global_teardown_channels() ->
+    Commands = get_java_code([
+        "v.tearDown();",
+        "v.globalTearDown(false);"
+    ]),
+    measure_java:run_java_commands(false, 1, null,
+        lists:flatten(Commands), null).
+
+%%
+%% Java commands EPG
+%%
 get_run_commands_epg(NumChannels) ->
     Commands = get_java_code([
         "v.findChannelsInformation(" ++ integer_to_list(NumChannels) ++ ");"
     ]),
     lists:flatten(Commands).
 
-get_setup_commands(NumEPGChannels) ->
+get_setup_commands_epg(NumEPGChannels) ->
     Commands = get_java_code([
         "v.setUp(" ++ integer_to_list(NumEPGChannels) ++ ");"
     ]),
     lists:flatten(Commands).
 
-get_teardown_commands() ->
+get_teardown_commands_epg() ->
     Commands = get_java_code([
         "v.tearDown();"
     ]),
     lists:flatten(Commands).
 
-global_setup() ->
+global_setup_epg() ->
     Commands = get_java_code([
         "v.globalSetUp(false);"
     ]),
     measure_java:run_java_commands(false, 1, null,
         lists:flatten(Commands), null).
 
-global_teardown() ->
+global_teardown_epg() ->
     Commands = get_java_code([
         "v.globalTearDown(false);"
     ]),
@@ -124,7 +155,7 @@ measure_channels() ->
                 repeat = 5},
     {Time, _} = timer:tc(measure_java, measure_java,
         [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
-        fun global_setup/0, fun global_teardown/0]),
+        fun global_setup_channels/0, fun global_teardown_channels/0]),
     Time / 1000000.
 
 measure_epg() ->
@@ -137,7 +168,7 @@ measure_epg() ->
                 repeat = 5},
     {Time, _} = timer:tc(measure_java, measure_java,
         [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
-        fun global_setup/0, fun global_teardown/0]),
+        fun global_setup_epg/0, fun global_teardown_epg/0]),
     Time / 1000000.
 
 measure_epg_memcached() ->

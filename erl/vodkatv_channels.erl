@@ -6,18 +6,22 @@
 -compile(export_all).
 
 -define(MAX_CHANNELS, 1000).
+-define(STEP, 10).
 
 %%
 %% Grow functions
 %%
 grow_channels(NumChannels) ->
-  [NumChannels + 10].
+  [NumChannels + ?STEP].
 
 grow_epg({NumChannels, _NumEPGChannels}) ->
-  NumChannels1 = NumChannels + 10,
+  NumChannels1 = NumChannels + ?STEP,
   [{NumChannels1, 0},
    {NumChannels1, (random:uniform(?MAX_CHANNELS + 1)-1)},
    {NumChannels1, NumChannels1}].
+
+grow_memcached(NumChannels) ->
+  [NumChannels + ?STEP].
 
 %%
 %% Eval cmds functions
@@ -36,6 +40,13 @@ eval_cmds_epg({NumChannels, NumEPGChannels}) ->
     measure_java:run_java_commands(false, 5, SetupCommands,
         lists:flatten(RunCommands), TearDownCommands).
 
+eval_cmds_memcached(NumChannels) ->
+    SetupCommands = get_setup_commands_memcached(),
+    RunCommands = get_run_commands_memcached(NumChannels),
+    TearDownCommands = get_teardown_commands_memcached(),
+    measure_java:run_java_commands(false, 5, SetupCommands,
+        lists:flatten(RunCommands), TearDownCommands).
+
 %%
 %% Measure size functions
 %%
@@ -45,6 +56,12 @@ measure_size_channels(NumChannels) ->
 measure_size_epg({NumChannels, _NumEPGChannels}) ->
     NumChannels.
 
+measure_size_memcached(NumChannels) ->
+    NumChannels.
+
+%%
+%% Java commands
+%%
 get_java_code(Commands) ->
     ["{",
         "try {"
@@ -128,15 +145,44 @@ global_teardown_epg() ->
     measure_java:run_java_commands(false, 1, null,
         lists:flatten(Commands), null).
 
+%%
+%% Java commands Memcached
+%%
+get_run_commands_memcached(NumChannels) ->
+    Commands = get_java_code([
+        "v.findChannelsInformation(" ++ integer_to_list(NumChannels) ++ ");"
+    ]),
+    lists:flatten(Commands).
+
+get_setup_commands_memcached() ->
+    Commands = get_java_code([
+        ";"
+    ]),
+    lists:flatten(Commands).
+
+get_teardown_commands_memcached() ->
+    Commands = get_java_code([
+        ";"
+    ]),
+    lists:flatten(Commands).
+
 global_setup_memcached() ->
     Commands = get_java_code([
-        "v.globalSetUp(true);"
+        "v.globalSetUp(true);",
+        "v.setUp(1000);",
+        "/* Warm up caches */",
+        "int i = 0;"
+        "while(i < " ++ integer_to_list(?MAX_CHANNELS) ++ ") {",
+        "try { v.findChannelsInformation(i); } catch(Exception e) {;}",
+        "i = i + " ++ integer_to_list(?STEP) ++ ";",
+        "}"
     ]),
     measure_java:run_java_commands(false, 1, null,
         lists:flatten(Commands), null).
 
 global_teardown_memcached() ->
     Commands = get_java_code([
+        "v.tearDown();",
         "v.globalTearDown(true);"
     ]),
     measure_java:run_java_commands(false, 1, null,
@@ -175,9 +221,9 @@ measure_epg_memcached() ->
     java:set_timeout(infinity),
     ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
             filelib:wildcard("../examples/vodkatv/lib/*.jar"),
-    Family = #family{initial = {0,0}, grow = fun grow_epg/1},
-    Axes = #axes{size = fun measure_size_epg/1,
-                time = fun eval_cmds_epg/1,
+    Family = #family{initial = 0, grow = fun grow_memcached/1},
+    Axes = #axes{size = fun measure_size_memcached/1,
+                time = fun eval_cmds_memcached/1,
                 repeat = 5},
     {Time, _} = timer:tc(measure_java, measure_java,
         [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,

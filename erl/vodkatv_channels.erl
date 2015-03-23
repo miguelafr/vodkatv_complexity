@@ -172,7 +172,7 @@ global_setup_memcached() ->
         "v.setUp(1000);",
         "/* Warm up caches */",
         "int i = 0;"
-        "while(i < " ++ integer_to_list(?MAX_CHANNELS) ++ ") {",
+        "while(i <= " ++ integer_to_list(?MAX_CHANNELS) ++ ") {",
         "try { v.findChannelsInformation(i); } catch(Exception e) {;}",
         "i = i + " ++ integer_to_list(?STEP) ++ ";",
         "}"

@@ -5,18 +5,23 @@
 
 -compile(export_all).
 
-num_channels(N) ->
-    [N + 50].
+-define(MAX_CHANNELS, 1000).
 
-eval_cmds(N) ->
-    SetupCommands = get_setup_commands(),
-    RunCommands = get_run_commands(N),
+grow({NumChannels, _NumEPGChannels}) ->
+  NumChannels1 = NumChannels + 10,
+  [{NumChannels1, 0},
+   {NumChannels1, (random:uniform(?MAX_CHANNELS + 1)-1)},
+   {NumChannels1, NumChannels1}].
+
+eval_cmds({NumChannels, NumEPGChannels}) ->
+    SetupCommands = get_setup_commands(NumEPGChannels),
+    RunCommands = get_run_commands(NumChannels),
     TearDownCommands = get_teardown_commands(),
-    measure_java:run_java_commands(false, 50, SetupCommands,
+    measure_java:run_java_commands(false, 5, SetupCommands,
         lists:flatten(RunCommands), TearDownCommands).
 
-measure_size(N) ->
-    N.
+measure_size({NumChannels, _NumEPGChannels}) ->
+    NumChannels.
 
 get_java_code(Commands) ->
     ["{",
@@ -29,15 +34,15 @@ get_java_code(Commands) ->
         "return null;",
     "}"].
 
-get_run_commands(N) ->
+get_run_commands(NumChannels) ->
     Commands = get_java_code([
-        "v.findChannelsInformation(" ++ integer_to_list(N) ++ ");"
+        "v.findChannelsInformation(" ++ integer_to_list(NumChannels) ++ ");"
     ]),
     lists:flatten(Commands).
 
-get_setup_commands() ->
+get_setup_commands(NumEPGChannels) ->
     Commands = get_java_code([
-        "v.setUp();"
+        "v.setUp(" ++ integer_to_list(NumEPGChannels) ++ ");"
     ]),
     lists:flatten(Commands).
 
@@ -57,11 +62,11 @@ measure() ->
     java:set_timeout(infinity),
     ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
             filelib:wildcard("../examples/vodkatv/lib/*.jar"),
-    Family = #family{initial = 0, grow = fun num_channels/1},
+    Family = #family{initial = {0,0}, grow = fun grow/1},
     Axes = #axes{size = fun measure_size/1,
                 time = fun eval_cmds/1,
                 repeat = 5},
     {Time, _} = timer:tc(measure_java, measure_java,
-        [1,  1000, Family, Axes, ClassPaths,
+        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
         fun global_setup/0, fun global_teardown/0]),
     Time / 1000000.

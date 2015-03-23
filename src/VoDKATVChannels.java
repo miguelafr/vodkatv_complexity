@@ -138,25 +138,32 @@ public class VoDKATVChannels {
 
     public ChunkTO<ChannelInformationTO> findChannelsInformation(int numChannels)
             throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing findChannelsInformation(" +
-                numChannels + ")...");
-        try {
-            MediaChannelsFacadeDelegate mediaChannelsFacadeDelegate =
-                    MediaChannelsFacadeDelegateFactory.getDelegate();
+        if(deviceId != null && accountId != null) {
+            System.out.println("[VoDKATVChannels] - Executing findChannelsInformation(" +
+                    numChannels + ")...");
+            try {
+                MediaChannelsFacadeDelegate mediaChannelsFacadeDelegate =
+                        MediaChannelsFacadeDelegateFactory.getDelegate();
 
-            AccountDeviceTO accountDeviceTO = AccountDeviceTO.createInstance(
-                    deviceId, accountId);
-            ChannelSearch channelSearch = new ChannelSearch();
-            int startIndex = 1;
-            int count = numChannels;
-            int maxNextEvents = 20;
-            List<Locale> locales = null;
+                AccountDeviceTO accountDeviceTO = AccountDeviceTO.createInstance(
+                        deviceId, accountId);
+                ChannelSearch channelSearch = new ChannelSearch();
+                int startIndex = 1;
+                int count = numChannels;
+                int maxNextEvents = 20;
+                List<Locale> locales = null;
 
-            return mediaChannelsFacadeDelegate.findChannelsInformation(
-                    accountDeviceTO, channelSearch, startIndex, count,
-                    maxNextEvents, locales);
-        } catch(InstanceNotFoundException infe) {
-            throw new InternalErrorException(infe);
+                return mediaChannelsFacadeDelegate.findChannelsInformation(
+                        accountDeviceTO, channelSearch, startIndex, count,
+                        maxNextEvents, locales);
+            } catch(InstanceNotFoundException infe) {
+                throw new InternalErrorException(infe);
+            }
+        } else {
+            System.out.println("[VoDKATVChannels] - Warning: " +
+                    "deviceId = " + deviceId + " - " +
+                    "accountId = " + accountId);
+            return null;
         }
     }
 
@@ -170,12 +177,13 @@ public class VoDKATVChannels {
     /*=========================================================================
      * SET UP
      * ====================================================================== */
-    public void setUp() throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing setUp...");
+    public void setUp(int numEPGChannels) throws InternalErrorException {
+        System.out.println("[VoDKATVChannels] - Executing setUp(" +
+                numEPGChannels + ") ...");
         initDatasource();
         //initMemcached();
         initMetadataServer();
-        createTestChannels();
+        createTestChannels(numEPGChannels);
         initAccountData();
         initPackagesAndProducts();
         initChannelsList();
@@ -357,7 +365,7 @@ public class VoDKATVChannels {
          */
         try {
             roomSTBSessionTO = mappingFacadeDelegate.createRoomSTBSession(
-                            roomSTBSessionTO);
+                    roomSTBSessionTO);
             userSessionTO = roomSTBSessionTO.getCurrentUserSessionTO();
             accountDetailsTO =
                     userSessionTO.getAccountDetailsTOs().iterator().next();
@@ -572,7 +580,8 @@ public class VoDKATVChannels {
     /*=========================================================================
      * CHANNELS
      * ====================================================================== */
-    private void createTestChannels() throws InternalErrorException {
+    private void createTestChannels(int numEPGChannels)
+            throws InternalErrorException {
 
         MediaChannelsFacadeDelegate mediaChannelsFacadeDelegate =
                 MediaChannelsFacadeDelegateFactory.getDelegate();
@@ -591,7 +600,6 @@ public class VoDKATVChannels {
                 new ArrayList<ChannelTO>(
                         mediaChannelsFacadeDelegate.findAllChannels());
 
-        int totalChannelsWithEPG = new Random().nextInt(NUM_CHANNELS);
         int currentChannelsWithEPG = 0;
 
         /*
@@ -603,7 +611,7 @@ public class VoDKATVChannels {
             String vodkatvChannelId = getRandomName("test_" + i);
             String channelId = null;
             if(!channelTOs.isEmpty() &&
-                    currentChannelsWithEPG < totalChannelsWithEPG) {
+                    currentChannelsWithEPG < numEPGChannels) {
                 ChannelTO channelTO = channelTOs.get(Math.abs(
                         new Random().nextInt(channelTOs.size())));
                 channelId = channelTO.getChannelId();
@@ -680,7 +688,7 @@ public class VoDKATVChannels {
     public static void main(String[] args) {
         VoDKATVChannels v = VoDKATVChannels.getInstance();
         try {
-            v.setUp();
+            v.setUp(0);
             //v.prepareEnvironment();
             //System.out.println(v.findChannelsInformation(1));
             MediaChannelsFacadeDelegate mediaChannelsFacadeDelegate =

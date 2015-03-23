@@ -1,6 +1,7 @@
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
@@ -168,20 +169,28 @@ public class VoDKATVChannels {
     }
 
     /*=========================================================================
-     * PREPARE TEST ENVIRONMENT
-     * ====================================================================== */
-    public void prepareEnvironment() throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing prepareEnvironment...");
-    }
-
-    /*=========================================================================
      * SET UP
      * ====================================================================== */
+    public void globalSetUp(boolean useMemcached) throws InternalErrorException {
+        System.out.println("[VoDKATVChannels] - Executing globalSetUp(" +
+                useMemcached + ") ...");
+        initDatasource();
+        if(useMemcached) {
+            initMemcached();
+        }
+    }
+
+    public void globalTearDown(boolean useMemcached) throws InternalErrorException {
+        System.out.println("[VoDKATVChannels] - Executing globalTearDown(" +
+                useMemcached + ") ...");
+        if(useMemcached) {
+            stopMemcached();
+        }
+    }
+
     public void setUp(int numEPGChannels) throws InternalErrorException {
         System.out.println("[VoDKATVChannels] - Executing setUp(" +
                 numEPGChannels + ") ...");
-        initDatasource();
-        //initMemcached();
         initMetadataServer();
         createTestChannels(numEPGChannels);
         initAccountData();
@@ -197,7 +206,6 @@ public class VoDKATVChannels {
         deleteChannelsList();
         deletePackagesAndProducts();
         deleteAccountData();
-        //stopMemcached();
         SchedulerManager.getInstance().shutdownAll();
     }
 
@@ -686,24 +694,33 @@ public class VoDKATVChannels {
      * TEST
      * ====================================================================== */
     public static void main(String[] args) {
+        boolean useMemcached = true;
         VoDKATVChannels v = VoDKATVChannels.getInstance();
         try {
-            v.setUp(0);
-            //v.prepareEnvironment();
-            //System.out.println(v.findChannelsInformation(1));
-            MediaChannelsFacadeDelegate mediaChannelsFacadeDelegate =
-                    MediaChannelsFacadeDelegateFactory.getDelegate();
-            List<ChannelTO> channelTOs =
-                    new ArrayList<ChannelTO>(
-                            mediaChannelsFacadeDelegate.findAllChannels());
-            System.out.println(channelTOs);
+            v.globalSetUp(useMemcached);
+            v.setUp(1000);
+            Date d1 = new Date();
+            v.findChannelsInformation(10);
+            Date d2 = new Date();
+            v.findChannelsInformation(10);
+            Date d3 = new Date();
+            v.findChannelsInformation(10);
+            Date d4 = new Date();
+            System.out.println((d4.getTime() - d3.getTime()) + " | " +
+                    (d3.getTime() - d2.getTime()) + " | " +
+                    (d2.getTime() - d1.getTime()));
         } catch(Exception e) {
             e.printStackTrace();
         } finally {
             try {
                 v.tearDown();
             } catch (InternalErrorException e) {
-                ;
+                e.printStackTrace();
+            }
+            try {
+                v.globalTearDown(useMemcached);
+            } catch (InternalErrorException e) {
+                e.printStackTrace();
             }
         }
     }

@@ -7,20 +7,42 @@
 
 -define(MAX_CHANNELS, 1000).
 
-grow({NumChannels, _NumEPGChannels}) ->
+%%
+%% Grow functions
+%%
+grow_channels(NumChannels) ->
+  [NumChannels + 10].
+
+grow_epg({NumChannels, _NumEPGChannels}) ->
   NumChannels1 = NumChannels + 10,
   [{NumChannels1, 0},
    {NumChannels1, (random:uniform(?MAX_CHANNELS + 1)-1)},
    {NumChannels1, NumChannels1}].
 
-eval_cmds({NumChannels, NumEPGChannels}) ->
-    SetupCommands = get_setup_commands(NumEPGChannels),
-    RunCommands = get_run_commands(NumChannels),
+%%
+%% Eval cmds functions
+%%
+eval_cmds_channels(NumChannels) ->
+    SetupCommands = get_setup_commands(0),
+    RunCommands = get_run_commands_channels(NumChannels),
     TearDownCommands = get_teardown_commands(),
     measure_java:run_java_commands(false, 5, SetupCommands,
         lists:flatten(RunCommands), TearDownCommands).
 
-measure_size({NumChannels, _NumEPGChannels}) ->
+eval_cmds_epg({NumChannels, NumEPGChannels}) ->
+    SetupCommands = get_setup_commands(NumEPGChannels),
+    RunCommands = get_run_commands_epg(NumChannels),
+    TearDownCommands = get_teardown_commands(),
+    measure_java:run_java_commands(false, 5, SetupCommands,
+        lists:flatten(RunCommands), TearDownCommands).
+
+%%
+%% Measure size functions
+%%
+measure_size_channels(NumChannels) ->
+    NumChannels.
+
+measure_size_epg({NumChannels, _NumEPGChannels}) ->
     NumChannels.
 
 get_java_code(Commands) ->
@@ -34,7 +56,16 @@ get_java_code(Commands) ->
         "return null;",
     "}"].
 
-get_run_commands(NumChannels) ->
+%%
+%% Java commands
+%%
+get_run_commands_channels(NumChannels) ->
+    Commands = get_java_code([
+        "v.findChannelDatas(" ++ integer_to_list(NumChannels) ++ ");"
+    ]),
+    lists:flatten(Commands).
+
+get_run_commands_epg(NumChannels) ->
     Commands = get_java_code([
         "v.findChannelsInformation(" ++ integer_to_list(NumChannels) ++ ");"
     ]),
@@ -53,20 +84,72 @@ get_teardown_commands() ->
     lists:flatten(Commands).
 
 global_setup() ->
-    ok.
+    Commands = get_java_code([
+        "v.globalSetUp(false);"
+    ]),
+    measure_java:run_java_commands(false, 1, null,
+        lists:flatten(Commands), null).
 
 global_teardown() ->
-    ok.
+    Commands = get_java_code([
+        "v.globalTearDown(false);"
+    ]),
+    measure_java:run_java_commands(false, 1, null,
+        lists:flatten(Commands), null).
 
-measure() ->
+global_setup_memcached() ->
+    Commands = get_java_code([
+        "v.globalSetUp(true);"
+    ]),
+    measure_java:run_java_commands(false, 1, null,
+        lists:flatten(Commands), null).
+
+global_teardown_memcached() ->
+    Commands = get_java_code([
+        "v.globalTearDown(true);"
+    ]),
+    measure_java:run_java_commands(false, 1, null,
+        lists:flatten(Commands), null).
+
+%%
+%% Measure functions
+%%
+measure_channels() ->
     java:set_timeout(infinity),
     ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
             filelib:wildcard("../examples/vodkatv/lib/*.jar"),
-    Family = #family{initial = {0,0}, grow = fun grow/1},
-    Axes = #axes{size = fun measure_size/1,
-                time = fun eval_cmds/1,
+    Family = #family{initial = 0, grow = fun grow_channels/1},
+    Axes = #axes{size = fun measure_size_channels/1,
+                time = fun eval_cmds_channels/1,
                 repeat = 5},
     {Time, _} = timer:tc(measure_java, measure_java,
         [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
         fun global_setup/0, fun global_teardown/0]),
     Time / 1000000.
+
+measure_epg() ->
+    java:set_timeout(infinity),
+    ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
+            filelib:wildcard("../examples/vodkatv/lib/*.jar"),
+    Family = #family{initial = {0,0}, grow = fun grow_epg/1},
+    Axes = #axes{size = fun measure_size_epg/1,
+                time = fun eval_cmds_epg/1,
+                repeat = 5},
+    {Time, _} = timer:tc(measure_java, measure_java,
+        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
+        fun global_setup/0, fun global_teardown/0]),
+    Time / 1000000.
+
+measure_epg_memcached() ->
+    java:set_timeout(infinity),
+    ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
+            filelib:wildcard("../examples/vodkatv/lib/*.jar"),
+    Family = #family{initial = {0,0}, grow = fun grow_epg/1},
+    Axes = #axes{size = fun measure_size_epg/1,
+                time = fun eval_cmds_epg/1,
+                repeat = 5},
+    {Time, _} = timer:tc(measure_java, measure_java,
+        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
+        fun global_setup_memcached/0, fun global_teardown_memcached/0]),
+    Time / 1000000.
+

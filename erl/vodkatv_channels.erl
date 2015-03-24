@@ -6,7 +6,7 @@
 -compile(export_all).
 
 -define(MAX_CHANNELS, 1000).
--define(STEP, 10).
+-define(STEP, 100).
 
 %%
 %% Grow functions
@@ -42,6 +42,13 @@ eval_cmds_epg({NumChannels, NumEPGChannels}) ->
 
 eval_cmds_memcached(NumChannels) ->
     SetupCommands = get_setup_commands_memcached(),
+    RunCommands = get_run_commands_memcached(NumChannels),
+    TearDownCommands = get_teardown_commands_memcached(),
+    measure_java:run_java_commands(false, 5, SetupCommands,
+        lists:flatten(RunCommands), TearDownCommands).
+
+eval_cmds_memcached_warmup(NumChannels) ->
+    SetupCommands = get_setup_commands_memcached_warmup(NumChannels),
     RunCommands = get_run_commands_memcached(NumChannels),
     TearDownCommands = get_teardown_commands_memcached(),
     measure_java:run_java_commands(false, 5, SetupCommands,
@@ -160,6 +167,15 @@ get_setup_commands_memcached() ->
     ]),
     lists:flatten(Commands).
 
+get_setup_commands_memcached_warmup(NumChannels) ->
+    Commands = get_java_code([
+        "/* Warm up caches */",
+        "try { v.findChannelsInformation(" ++
+            integer_to_list(NumChannels) ++
+            "); } catch(Exception e) {;}"
+    ]),
+    lists:flatten(Commands).
+
 get_teardown_commands_memcached() ->
     Commands = get_java_code([
         ";"
@@ -169,13 +185,7 @@ get_teardown_commands_memcached() ->
 global_setup_memcached() ->
     Commands = get_java_code([
         "v.globalSetUp(true);",
-        "v.setUp(1000);",
-        "/* Warm up caches */",
-        "int i = 0;"
-        "while(i <= " ++ integer_to_list(?MAX_CHANNELS) ++ ") {",
-        "try { v.findChannelsInformation(i); } catch(Exception e) {;}",
-        "i = i + " ++ integer_to_list(?STEP) ++ ";",
-        "}"
+        "v.setUp(1000);"
     ]),
     measure_java:run_java_commands(false, 1, null,
         lists:flatten(Commands), null).
@@ -230,3 +240,15 @@ measure_epg_memcached() ->
         fun global_setup_memcached/0, fun global_teardown_memcached/0]),
     Time / 1000000.
 
+measure_epg_memcached_warmup() ->
+    java:set_timeout(infinity),
+    ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
+            filelib:wildcard("../examples/vodkatv/lib/*.jar"),
+    Family = #family{initial = 0, grow = fun grow_memcached/1},
+    Axes = #axes{size = fun measure_size_memcached/1,
+                time = fun eval_cmds_memcached_warmup/1,
+                repeat = 5},
+    {Time, _} = timer:tc(measure_java, measure_java,
+        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
+        fun global_setup_memcached/0, fun global_teardown_memcached/0]),
+    Time / 1000000.

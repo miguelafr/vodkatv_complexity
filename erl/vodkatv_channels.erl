@@ -6,7 +6,7 @@
 -compile(export_all).
 
 -define(MAX_CHANNELS, 1000).
--define(STEP, 100).
+-define(STEP, 10).
 
 %%
 %% Grow functions

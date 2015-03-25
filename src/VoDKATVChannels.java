@@ -94,6 +94,7 @@ public class VoDKATVChannels {
     private Long channelListId;
     private Long packageId;
     private Long productId;
+    private Long currencyId;
 
     private int NUM_CHANNELS = 1000;
 
@@ -437,7 +438,7 @@ public class VoDKATVChannels {
             Calendar startTime = null;
             Calendar finishTime = null;
             boolean active = true;
-            Long currencyId = currencyTO.getCurrencyId();
+            currencyId = currencyTO.getCurrencyId();
             Float discount = null;
             Float registrationFee = null;
             Integer trialDays = null;
@@ -518,10 +519,21 @@ public class VoDKATVChannels {
                 PackageFacadeDelegateFactory.getDelegate();
         ProductFacadeDelegate productFacadeDelegate =
                 ProductFacadeDelegateFactory.getDelegate();
+        CurrencyFacadeDelegate currencyFacadeDelegate =
+                CurrencyFacadeDelegateFactory.getDelegate();
 
         try {
             productFacadeDelegate.deleteProductById(productId);
+        } catch (InstanceNotFoundException e) {
+            throw new InternalErrorException(e);
+        }
+        try {
             packageFacadeDelegate.deleteBasicPackageById(packageId);
+        } catch (InstanceNotFoundException e) {
+            throw new InternalErrorException(e);
+        }
+        try {
+            currencyFacadeDelegate.deleteCurrency(currencyId);
         } catch (InstanceNotFoundException e) {
             throw new InternalErrorException(e);
         }

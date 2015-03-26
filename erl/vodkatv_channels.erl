@@ -18,7 +18,7 @@ grow_epg({NumChannels, _NumEPGChannels}) ->
   NumChannels1 = NumChannels + ?STEP,
   [{NumChannels1, 0},
    {NumChannels1, (random:uniform(?MAX_CHANNELS + 1)-1)},
-   {NumChannels1, NumChannels1}].
+   {NumChannels1, ?MAX_CHANNELS}].
 
 grow_memcached(NumChannels) ->
   [NumChannels + ?STEP].

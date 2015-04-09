@@ -199,6 +199,58 @@ global_teardown_memcached() ->
         lists:flatten(Commands), null).
 
 %%
+%% HTTP
+%%
+measure_time_http_jsp(Args) ->
+  {Time, _} = timer:tc(?MODULE, make_call_jsp, [Args]),
+  Time.
+
+make_call_jsp(Args) ->
+  Request = "http://10.121.55.41:8082/vodkatv/external/client/plugins/television/FindChannelsDummy.do?startIndex=1&count=" ++ integer_to_list(Args),
+  {ok, Result} = httpc_request(Request),
+  {{_Version, 200, _Reason}, _Headers, Body} = Result,
+  Body.
+
+measure_time_http_jersey(Args) ->
+  {Time, _} = timer:tc(?MODULE, make_call_jersey, [Args]),
+  Time.
+
+make_call_jersey(Args) ->
+  Request = "http://10.121.55.41:8082/vodkatv/external/client/v2/plugins/television/channelsdummy?startIndex=1&count=" ++ integer_to_list(Args),
+  {ok, Result} = httpc_request(Request),
+  {{_Version, 200, _Reason}, _Headers, Body} = Result,
+  Body.
+
+measure_time_http_jsp_dummy(Args) ->
+  {Time, _} = timer:tc(?MODULE, make_call_jsp_dummy, [Args]),
+  Time.
+
+make_call_jsp_dummy(Args) ->
+  Request = "http://10.121.55.41:8082/vodkatv/external/client/plugins/television/FindChannelsDummy.do?startIndex=1&count=" ++ integer_to_list(Args) ++ "&dummyResponse=true",
+  {ok, Result} = httpc_request(Request),
+  {{_Version, 200, _Reason}, _Headers, Body} = Result,
+  Body.
+
+measure_time_http_jersey_dummy(Args) ->
+  {Time, _} = timer:tc(?MODULE, make_call_jersey_dummy, [Args]),
+  Time.
+
+make_call_jersey_dummy(Args) ->
+  Request = "http://10.121.55.41:8082/vodkatv/external/client/v2/plugins/television/channelsdummy?startIndex=1&count=" ++ integer_to_list(Args) ++ "&dummyResponse=true",
+  {ok, Result} = httpc_request(Request),
+  {{_Version, 200, _Reason}, _Headers, Body} = Result,
+  Body.
+
+httpc_request(Request) ->
+    case httpc:request(Request) of
+        {error,socket_closed_remotely} ->
+            io:format("Warning: socket_closed_remotely error. Retrying request...~n"),
+            httpc_request(Request);
+        R ->
+            R
+    end.
+
+%%
 %% Measure functions
 %%
 measure_channels() ->
@@ -252,3 +304,31 @@ measure_epg_memcached_warmup() ->
         [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
         fun global_setup_memcached/0, fun global_teardown_memcached/0]),
     Time / 1000000.
+
+measure_http_jsp() ->
+  catch inets:start(),
+  measure(1, ?MAX_CHANNELS,
+          #family{initial = 0, grow = fun grow_channels/1},
+          #axes{size = fun measure_size_channels/1,
+                time = fun measure_time_http_jsp/1, repeat = 5}).
+
+measure_http_jersey() ->
+  catch inets:start(),
+  measure(1, ?MAX_CHANNELS,
+          #family{initial = 0, grow = fun grow_channels/1},
+          #axes{size = fun measure_size_channels/1,
+                time = fun measure_time_http_jersey/1, repeat = 5}).
+
+measure_http_jsp_dummy() ->
+  catch inets:start(),
+  measure(1, ?MAX_CHANNELS,
+          #family{initial = 0, grow = fun grow_channels/1},
+          #axes{size = fun measure_size_channels/1,
+                time = fun measure_time_http_jsp_dummy/1, repeat = 5}).
+
+measure_http_jersey_dummy() ->
+  catch inets:start(),
+  measure(1, ?MAX_CHANNELS,
+          #family{initial = 0, grow = fun grow_channels/1},
+          #axes{size = fun measure_size_channels/1,
+                time = fun measure_time_http_jersey_dummy/1, repeat = 5}).

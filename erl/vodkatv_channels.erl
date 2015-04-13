@@ -260,7 +260,7 @@ measure_channels() ->
     Family = #family{initial = 0, grow = fun grow_channels/1},
     Axes = #axes{size = fun measure_size_channels/1,
                 time = fun eval_cmds_channels/1,
-                repeat = 5},
+                repeat = 5, outliers = 5},
     {Time, _} = timer:tc(measure_java, measure_java,
         [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
         fun global_setup_channels/0, fun global_teardown_channels/0]),
@@ -299,7 +299,7 @@ measure_epg_memcached_warmup() ->
     Family = #family{initial = 0, grow = fun grow_memcached/1},
     Axes = #axes{size = fun measure_size_memcached/1,
                 time = fun eval_cmds_memcached_warmup/1,
-                repeat = 5},
+                repeat = 5, outliers = 5},
     {Time, _} = timer:tc(measure_java, measure_java,
         [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
         fun global_setup_memcached/0, fun global_teardown_memcached/0]),
@@ -317,18 +317,21 @@ measure_http_jersey() ->
   measure(1, ?MAX_CHANNELS,
           #family{initial = 0, grow = fun grow_channels/1},
           #axes{size = fun measure_size_channels/1,
-                time = fun measure_time_http_jersey/1, repeat = 5}).
+                time = fun measure_time_http_jersey/1, repeat = 5,
+                outliers = 10}).
 
 measure_http_jsp_dummy() ->
   catch inets:start(),
   measure(1, ?MAX_CHANNELS,
           #family{initial = 0, grow = fun grow_channels/1},
           #axes{size = fun measure_size_channels/1,
-                time = fun measure_time_http_jsp_dummy/1, repeat = 5}).
+                time = fun measure_time_http_jsp_dummy/1, repeat = 5,
+                outliers = 5}).
 
 measure_http_jersey_dummy() ->
   catch inets:start(),
   measure(1, ?MAX_CHANNELS,
           #family{initial = 0, grow = fun grow_channels/1},
           #axes{size = fun measure_size_channels/1,
-                time = fun measure_time_http_jersey_dummy/1, repeat = 5}).
+                time = fun measure_time_http_jersey_dummy/1, repeat = 5,
+                outliers = 5}).

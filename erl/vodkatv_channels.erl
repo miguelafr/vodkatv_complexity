@@ -253,106 +253,130 @@ httpc_request(Request) ->
 %%
 %% Measure functions
 %%
-measure_channels(Name) ->
-    io:format("measure_channels [~p]...~n", [Name]),
-    java:set_timeout(infinity),
-    ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
-            filelib:wildcard("../examples/vodkatv/lib/*.jar"),
-    Family = #family{initial = 0, grow = fun grow_channels/1},
-    Axes = #axes{size = fun measure_size_channels/1,
-                time = fun eval_cmds_channels/1,
-                repeat = 5, name = Name},
-    {Time, _} = timer:tc(measure_java, measure_java,
-        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
-        fun global_setup_channels/0, fun global_teardown_channels/0]),
-    io:format("measure_channels [~p]: ~p ms.~n", [Name, Time / 1000000]).
+measure_channels(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_channels_" ++ integer_to_list(I),
+        io:format("measure_channels [~p]...~n", [Name]),
+        java:set_timeout(infinity),
+        ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
+                filelib:wildcard("../examples/vodkatv/lib/*.jar"),
+        Family = #family{initial = 0, grow = fun grow_channels/1},
+        Axes = #axes{size = fun measure_size_channels/1,
+                    time = fun eval_cmds_channels/1,
+                    repeat = 5, name = Name},
+        {Time, _} = timer:tc(measure_java, measure_java,
+            [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
+            fun global_setup_channels/0, fun global_teardown_channels/0]),
+        io:format("measure_channels [~p]: ~p ms.~n", [Name, Time / 1000000])
+    end, lists:seq(1, N)).
 
-measure_epg(Name) ->
-    io:format("measure_epg [~p]...~n", [Name]),
-    java:set_timeout(infinity),
-    ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
-            filelib:wildcard("../examples/vodkatv/lib/*.jar"),
-    Family = #family{initial = {0,0}, grow = fun grow_epg/1},
-    Axes = #axes{size = fun measure_size_epg/1,
-                time = fun eval_cmds_epg/1,
-                repeat = 5, name = Name},
-    {Time, _} = timer:tc(measure_java, measure_java,
-        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
-        fun global_setup_epg/0, fun global_teardown_epg/0]),
-    io:format("measure_epg [~p]: ~p ms.~n", [Name, Time / 1000000]).
+measure_epg(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_epg_" ++ integer_to_list(I),
+        io:format("measure_epg [~p]...~n", [Name]),
+        java:set_timeout(infinity),
+        ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
+                filelib:wildcard("../examples/vodkatv/lib/*.jar"),
+        Family = #family{initial = {0,0}, grow = fun grow_epg/1},
+        Axes = #axes{size = fun measure_size_epg/1,
+                    time = fun eval_cmds_epg/1,
+                    repeat = 5, name = Name},
+        {Time, _} = timer:tc(measure_java, measure_java,
+            [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
+            fun global_setup_epg/0, fun global_teardown_epg/0]),
+        io:format("measure_epg [~p]: ~p ms.~n", [Name, Time / 1000000])
+    end, lists:seq(1, N)).
 
-measure_epg_memcached(Name) ->
-    io:format("measure_epg_memcached [~p]...~n", [Name]),
-    java:set_timeout(infinity),
-    ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
-            filelib:wildcard("../examples/vodkatv/lib/*.jar"),
-    Family = #family{initial = 0, grow = fun grow_memcached/1},
-    Axes = #axes{size = fun measure_size_memcached/1,
-                time = fun eval_cmds_memcached/1,
-                repeat = 5, name = Name},
-    {Time, _} = timer:tc(measure_java, measure_java,
-        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
-        fun global_setup_memcached/0, fun global_teardown_memcached/0]),
-    io:format("measure_epg_memcached [~p]: ~p ms.~n", [Name, Time / 1000000]).
+measure_epg_memcached(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_epg_memcached_" ++ integer_to_list(I),
+        io:format("measure_epg_memcached [~p]...~n", [Name]),
+        java:set_timeout(infinity),
+        ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
+                filelib:wildcard("../examples/vodkatv/lib/*.jar"),
+        Family = #family{initial = 0, grow = fun grow_memcached/1},
+        Axes = #axes{size = fun measure_size_memcached/1,
+                    time = fun eval_cmds_memcached/1,
+                    repeat = 5, name = Name},
+        {Time, _} = timer:tc(measure_java, measure_java,
+            [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
+            fun global_setup_memcached/0, fun global_teardown_memcached/0]),
+        io:format("measure_epg_memcached [~p]: ~p ms.~n", [Name, Time / 1000000])
+    end, lists:seq(1, N)).
 
-measure_epg_memcached_warmup(Name) ->
-    io:format("measure_epg_memcached_warmup [~p]...~n", [Name]),
-    java:set_timeout(infinity),
-    ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
-            filelib:wildcard("../examples/vodkatv/lib/*.jar"),
-    Family = #family{initial = 0, grow = fun grow_memcached/1},
-    Axes = #axes{size = fun measure_size_memcached/1,
-                time = fun eval_cmds_memcached_warmup/1,
-                repeat = 5, name = Name},
-    {Time, _} = timer:tc(measure_java, measure_java,
-        [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
-        fun global_setup_memcached/0, fun global_teardown_memcached/0]),
-    io:format("measure_epg_memcached_warmup [~p]: ~p ms.~n", [Name, Time / 1000000]).
+measure_epg_memcached_warmup(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_epg_memcached_warmup_" ++ integer_to_list(I),
+        io:format("measure_epg_memcached_warmup [~p]...~n", [Name]),
+        java:set_timeout(infinity),
+        ClassPaths = ["../examples/vodkatv/src/", "../examples/vodkatv/vodkatv/"] ++
+                filelib:wildcard("../examples/vodkatv/lib/*.jar"),
+        Family = #family{initial = 0, grow = fun grow_memcached/1},
+        Axes = #axes{size = fun measure_size_memcached/1,
+                    time = fun eval_cmds_memcached_warmup/1,
+                    repeat = 5, name = Name},
+        {Time, _} = timer:tc(measure_java, measure_java,
+            [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
+            fun global_setup_memcached/0, fun global_teardown_memcached/0]),
+        io:format("measure_epg_memcached_warmup [~p]: ~p ms.~n", [Name, Time / 1000000])
+    end, lists:seq(1, N)).
 
-measure_http_jsp(Name) ->
-    io:format("measure_http_jsp [~p]...~n", [Name]),
-    catch inets:start(),
-    Now1 = now(),  
-    measure(1, ?MAX_CHANNELS,
-          #family{initial = 0, grow = fun grow_channels/1},
-          #axes{size = fun measure_size_channels/1,
-                time = fun measure_time_http_jsp/1, repeat = 5,
-                name = Name}),
-    io:format("measure_http_jsp [~p]: ~p ms.~n",
-        [Name, timer:now_diff(now(), Now1)/1000000]).
+measure_http_jsp(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_http_jsp_" ++ integer_to_list(I),
+        io:format("measure_http_jsp [~p]...~n", [Name]),
+        catch inets:start(),
+        Now1 = now(),  
+        measure(1, ?MAX_CHANNELS,
+              #family{initial = 0, grow = fun grow_channels/1},
+              #axes{size = fun measure_size_channels/1,
+                    time = fun measure_time_http_jsp/1, repeat = 5,
+                    name = Name}),
+        io:format("measure_http_jsp [~p]: ~p ms.~n",
+            [Name, timer:now_diff(now(), Now1)/1000000])
+    end, lists:seq(1, N)).
 
-measure_http_jersey(Name) ->
-    io:format("measure_http_jersey [~p]...~n", [Name]),
-    catch inets:start(),
-    Now1 = now(),  
-    measure(1, ?MAX_CHANNELS,
-          #family{initial = 0, grow = fun grow_channels/1},
-          #axes{size = fun measure_size_channels/1,
-                time = fun measure_time_http_jersey/1, repeat = 5,
-                name = "jackson"}),
-    io:format("measure_http_jersey [~p]: ~p ms.~n",
-        [Name, timer:now_diff(now(), Now1)/1000000]).
+measure_http_jersey(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_http_jersey_" ++ integer_to_list(I),
+        io:format("measure_http_jersey [~p]...~n", [Name]),
+        catch inets:start(),
+        Now1 = now(),  
+        measure(1, ?MAX_CHANNELS,
+              #family{initial = 0, grow = fun grow_channels/1},
+              #axes{size = fun measure_size_channels/1,
+                    time = fun measure_time_http_jersey/1, repeat = 5,
+                    name = "jackson"}),
+        io:format("measure_http_jersey [~p]: ~p ms.~n",
+            [Name, timer:now_diff(now(), Now1)/1000000])
+    end, lists:seq(1, N)).
 
-measure_http_jsp_dummy(Name) ->
-    io:format("measure_http_jsp_dummy [~p]...~n", [Name]),
-    catch inets:start(),
-    Now1 = now(),  
-    measure(1, ?MAX_CHANNELS,
-          #family{initial = 0, grow = fun grow_channels/1},
-          #axes{size = fun measure_size_channels/1,
-                time = fun measure_time_http_jsp_dummy/1, repeat = 5,
-                name = Name}),
-    io:format("measure_http_jsp_dummy [~p]: ~p ms.~n",
-        [Name, timer:now_diff(now(), Now1)/1000000]).
+measure_http_jsp_dummy(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_http_jsp_dummy_" ++ integer_to_list(I),
+        io:format("measure_http_jsp_dummy [~p]...~n", [Name]),
+        catch inets:start(),
+        Now1 = now(),  
+        measure(1, ?MAX_CHANNELS,
+              #family{initial = 0, grow = fun grow_channels/1},
+              #axes{size = fun measure_size_channels/1,
+                    time = fun measure_time_http_jsp_dummy/1, repeat = 5,
+                    name = Name}),
+        io:format("measure_http_jsp_dummy [~p]: ~p ms.~n",
+            [Name, timer:now_diff(now(), Now1)/1000000])
+    end, lists:seq(1, N)).
 
-measure_http_jersey_dummy(Name) ->
-    io:format("measure_http_jersey_dummy [~p]...~n", [Name]),
-    catch inets:start(),
-    Now1 = now(),  
-    measure(1, ?MAX_CHANNELS,
-          #family{initial = 0, grow = fun grow_channels/1},
-          #axes{size = fun measure_size_channels/1,
-                time = fun measure_time_http_jersey_dummy/1, repeat = 5,
-                name = Name}),
-    io:format("measure_http_jersey_dummy [~p]: ~p ms.~n",
-        [Name, timer:now_diff(now(), Now1)/1000000]).
+measure_http_jersey_dummy(N) ->
+    lists:foreach(fun(I) ->
+        Name = "measure_http_jersey_dummy_" ++ integer_to_list(I),
+        io:format("measure_http_jersey_dummy [~p]...~n", [Name]),
+        catch inets:start(),
+        Now1 = now(),  
+        measure(1, ?MAX_CHANNELS,
+              #family{initial = 0, grow = fun grow_channels/1},
+              #axes{size = fun measure_size_channels/1,
+                    time = fun measure_time_http_jersey_dummy/1, repeat = 5,
+                    name = Name}),
+        io:format("measure_http_jersey_dummy [~p]: ~p ms.~n",
+            [Name, timer:now_diff(now(), Now1)/1000000])
+    end, lists:seq(1, N)).

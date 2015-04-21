@@ -1,13 +1,13 @@
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
-import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 import java.util.Random;
 
 import javax.sql.DataSource;
 
+import com.interoud.pms.pmsinterfacefacade.dummypms.DummyPMSFacadeDelegate;
 import com.lambdastream.metadata.connector.channelsfacade.delegate.ChannelsFacadeDelegateType;
 import com.lambdastream.metadata.connector.channelsfacade.to.ChannelTO;
 import com.lambdastream.tahiti.http.controller.session.AccountDeviceTO;
@@ -39,6 +39,7 @@ import com.lambdastream.tahiti.model.business.purchasefacade.delegate.AdminPurch
 import com.lambdastream.tahiti.model.business.purchasefacade.delegate.AdminPurchaseFacadeDelegateFactory;
 import com.lambdastream.tahiti.model.business.subscription.SubscriptionLimitType;
 import com.lambdastream.tahiti.model.business.subscription.SubscriptionRenovationType;
+import com.lambdastream.tahiti.model.configuration.cacheserver.to.CacheServerTO;
 import com.lambdastream.tahiti.model.configuration.channelconfigfacade.delegate.ChannelConfigFacadeDelegate;
 import com.lambdastream.tahiti.model.configuration.channelconfigfacade.delegate.ChannelConfigFacadeDelegateFactory;
 import com.lambdastream.tahiti.model.configuration.channeldata.to.ChannelAccessType;
@@ -54,10 +55,21 @@ import com.lambdastream.tahiti.model.configuration.configurationfacade.delegate.
 import com.lambdastream.tahiti.model.configuration.configurationfacade.delegate.ConfigurationFacadeDelegateFactory;
 import com.lambdastream.tahiti.model.configuration.configurationfacade.exceptions.DuplicateChannelNumberException;
 import com.lambdastream.tahiti.model.configuration.configurationfacade.exceptions.IncompatibleChannelTypeException;
-import com.lambdastream.tahiti.model.configuration.configurationfacade.to.AuxCacheServerTO;
 import com.lambdastream.tahiti.model.configuration.configurationfacade.to.ChannelListDetailsTO;
 import com.lambdastream.tahiti.model.configuration.configurationfacade.to.ChannelListItemDetailsTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.FidelioPMSConnectorConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.LambdaPMSConnectorConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerAssetManagerConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerAudimetryConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerCASDRMConfigurationTO;
 import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerEPGConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerImageServerConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerNPVRServerConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerPMSConnectorConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerQoEConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.MetaServerTeletextConfigurationTO;
+import com.lambdastream.tahiti.model.configuration.configurationfacade.to.SafeViewCASConnectorConfigurationTO;
 import com.lambdastream.tahiti.model.media.mediachannelsfacade.delegate.MediaChannelsFacadeDelegate;
 import com.lambdastream.tahiti.model.media.mediachannelsfacade.delegate.MediaChannelsFacadeDelegateFactory;
 import com.lambdastream.tahiti.model.media.mediachannelsfacade.to.ChannelInformationTO;
@@ -67,6 +79,8 @@ import com.lambdastream.tahiti.model.provisioning.deviceclass.to.DeviceClass;
 import com.lambdastream.tahiti.model.provisioning.mappingfacade.delegate.MappingFacadeDelegate;
 import com.lambdastream.tahiti.model.provisioning.mappingfacade.delegate.MappingFacadeDelegateFactory;
 import com.lambdastream.tahiti.model.provisioning.mappingfacade.to.RoomSTBSessionTO;
+import com.lambdastream.tahiti.model.util.exceptions.DateIsGreaterThanNowException;
+import com.lambdastream.tahiti.model.util.exceptions.InvalidAttributeValueException;
 import com.lambdastream.tahiti.model.util.exceptions.ReferencedObjectNotFoundException;
 import com.lambdastream.tahiti.model.util.naming.GlobalNames;
 import com.lambdastream.tahiti.model.util.searches.SearchOptions;
@@ -127,8 +141,8 @@ public class VoDKATVChannels {
      */
     public ChunkTO<ChannelDataTO> findChannelDatas(int numChannels)
             throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing findChannelDatas(" +
-                numChannels + ")...");
+//        System.out.println("[VoDKATVChannels] - Executing findChannelDatas(" +
+//                numChannels + ")...");
         ChannelConfigFacadeDelegate channelConfigFacadeDelegate =
                 ChannelConfigFacadeDelegateFactory.getDelegate();
         int startIndex = 1;
@@ -141,8 +155,8 @@ public class VoDKATVChannels {
     public ChunkTO<ChannelInformationTO> findChannelsInformation(int numChannels)
             throws InternalErrorException {
         if(deviceId != null && accountId != null) {
-            System.out.println("[VoDKATVChannels] - Executing findChannelsInformation(" +
-                    numChannels + ")...");
+//            System.out.println("[VoDKATVChannels] - Executing findChannelsInformation(" +
+//                    numChannels + ")...");
             try {
                 MediaChannelsFacadeDelegate mediaChannelsFacadeDelegate =
                         MediaChannelsFacadeDelegateFactory.getDelegate();
@@ -173,8 +187,8 @@ public class VoDKATVChannels {
      * SET UP
      * ====================================================================== */
     public void globalSetUp(boolean useMemcached) throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing globalSetUp(" +
-                useMemcached + ") ...");
+//        System.out.println("[VoDKATVChannels] - Executing globalSetUp(" +
+//                useMemcached + ") ...");
         initDatasource();
         if(useMemcached) {
             initMemcached();
@@ -182,16 +196,16 @@ public class VoDKATVChannels {
     }
 
     public void globalTearDown(boolean useMemcached) throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing globalTearDown(" +
-                useMemcached + ") ...");
+//        System.out.println("[VoDKATVChannels] - Executing globalTearDown(" +
+//                useMemcached + ") ...");
         if(useMemcached) {
             stopMemcached();
         }
     }
 
     public void setUp(int numEPGChannels) throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing setUp(" +
-                numEPGChannels + ") ...");
+//        System.out.println("[VoDKATVChannels] - Executing setUp(" +
+//                numEPGChannels + ") ...");
         initMetadataServer();
         createTestChannels(numEPGChannels);
         initAccountData();
@@ -203,7 +217,7 @@ public class VoDKATVChannels {
      * Finalizes VoDKATV components
      */
     public void tearDown() throws InternalErrorException {
-        System.out.println("[VoDKATVChannels] - Executing tearDown...");
+//        System.out.println("[VoDKATVChannels] - Executing tearDown...");
         deleteChannelsList();
         deletePackagesAndProducts();
         deleteAccountData();
@@ -226,57 +240,53 @@ public class VoDKATVChannels {
     private void initMemcached() throws InternalErrorException {
         ConfigurationFacadeDelegate configurationFacadeDelegate =
                 ConfigurationFacadeDelegateFactory.getDelegate();
-        Collection<AuxCacheServerTO> auxCacheServerTOs =
-                new ArrayList<AuxCacheServerTO>();
-        auxCacheServerTOs.add(new AuxCacheServerTO("10.121.55.32", 11211));
-        configurationFacadeDelegate.updateAuxCacheServers(auxCacheServerTOs);
+        configurationFacadeDelegate.deleteAllCacheServers();
+        configurationFacadeDelegate.createCacheServer(
+                new CacheServerTO(null, "10.121.55.32", new Integer(11211)));
     }
 
     private void initMetadataServer() throws InternalErrorException {
         ConfigurationFacadeDelegate configurationFacadeDelegate =
                 ConfigurationFacadeDelegateFactory.getDelegate();
 
-        String hostMetadataServer = null;
-        Integer portMetadataServer = null;
-        String loginMetadataServer = null;
-        String passwordMetadataServer = null;
-        String hostAnnotationsServer = null;
-        Integer portAnnotationsServer = null;
-        String urlLimgenServer = null;
-        String hostTeletextServer = null;
-        Integer portTeletextServer = null;
-        String hostNetPVRServer = null;
-        Integer portNetPVRServer = null;
-        String hostCouchDB = null;
-        Integer portCouchDB = null;
-        String dbCouchDB = null;
-        String protocolCouchDB = null;
-        String dataQueryUrl = null;
-        String tokenCouchDB = null;
-        String hostQoECouchDB = null;
-        Integer portQoECouchDB = null;
-        String dbQoECouchDB = null;
-        String hostEPGCouchDB = "epg-interoud.interoud.net";
-        Integer portEPGCouchDB = new Integer(5984);
-        String dbEPGCouchDB = "aka";
-        Integer availableEpgHours = new Integer(240);
-        Integer availableFutureEpgHours = new Integer(336);
-        String tokenEPGCouchDB = null;
-        ChannelsFacadeDelegateType channelsFacadeDelegateType =
-                ChannelsFacadeDelegateType.COUCH_DB;
+        MetaServerAssetManagerConfigurationTO metaServerAssetManagerConfigurationTO =
+                new MetaServerAssetManagerConfigurationTO(null, null, null, null);
+        MetaServerImageServerConfigurationTO metaServerImageServerConfigurationTO =
+                new MetaServerImageServerConfigurationTO(null);
+        MetaServerTeletextConfigurationTO metaServerTeletextConfigurationTO =
+                new MetaServerTeletextConfigurationTO(null, null, null);
+        MetaServerNPVRServerConfigurationTO metaServerNPVRServerConfigurationTO =
+                new MetaServerNPVRServerConfigurationTO(null, null, null, null,
+                        null);
+        MetaServerAudimetryConfigurationTO metaServerAudimetryConfigurationTO =
+                new MetaServerAudimetryConfigurationTO(null, null, null, null);
+        MetaServerQoEConfigurationTO metaServerQoEConfigurationTO =
+                new MetaServerQoEConfigurationTO(null, null);
+        MetaServerEPGConfigurationTO metaServerEPGConfigurationTO =
+                new MetaServerEPGConfigurationTO("epg-interoud.interoud.net:5984",
+                        "aka",
+                        new Integer(240), new Integer(336), null,
+                        ChannelsFacadeDelegateType.COUCH_DB);
+        MetaServerCASDRMConfigurationTO metaServerCASDRMConfigurationTO =
+                new MetaServerCASDRMConfigurationTO(null,
+                        new SafeViewCASConnectorConfigurationTO());
+        MetaServerPMSConnectorConfigurationTO metaServerPMSConnectorConfigurationTO =
+                new MetaServerPMSConnectorConfigurationTO(null,
+                        new LambdaPMSConnectorConfigurationTO(),
+                        new FidelioPMSConnectorConfigurationTO());
+
         MetaServerConfigurationTO metaServerConfigurationTO =
-                new MetaServerConfigurationTO(hostMetadataServer,
-                        portMetadataServer, loginMetadataServer,
-                        passwordMetadataServer, hostAnnotationsServer,
-                        portAnnotationsServer, urlLimgenServer,
-                        hostTeletextServer, portTeletextServer,
-                        hostNetPVRServer, portNetPVRServer,
-                        hostCouchDB, portCouchDB, dbCouchDB,
-                        protocolCouchDB, dataQueryUrl, tokenCouchDB,
-                        hostQoECouchDB, portQoECouchDB, dbQoECouchDB,
-                        hostEPGCouchDB, portEPGCouchDB, dbEPGCouchDB,
-                        availableEpgHours, availableFutureEpgHours,
-                        tokenEPGCouchDB, channelsFacadeDelegateType);
+                new MetaServerConfigurationTO(
+                        metaServerAssetManagerConfigurationTO,
+                        metaServerImageServerConfigurationTO,
+                        metaServerTeletextConfigurationTO,
+                        metaServerNPVRServerConfigurationTO,
+                        metaServerAudimetryConfigurationTO,
+                        metaServerQoEConfigurationTO,
+                        metaServerEPGConfigurationTO,
+                        metaServerCASDRMConfigurationTO,
+                        metaServerPMSConnectorConfigurationTO);
+
         configurationFacadeDelegate.updateMetaServerConfiguration(
                 metaServerConfigurationTO);
 
@@ -327,13 +337,14 @@ public class VoDKATVChannels {
         /*
          * Guest
          */
-        GuestTO guestTO = new GuestTO(null, userId, locale);
+        GuestTO guestTO = new GuestTO(userId, null, userId, null, null, null,
+                null, null, null, null, null, null, null, locale);
 
         /*
          * Access
          */
         AccountRemoteAccessTO accountRemoteAccessTO =
-                new AccountRemoteAccessTO(null, null, userId, null);
+                new AccountRemoteAccessTO(null, null, userId, null, now);
 
         /*
          * Account
@@ -387,6 +398,10 @@ public class VoDKATVChannels {
             throw new InternalErrorException(die);
         } catch (InstanceNotFoundException infe) {
             throw new InternalErrorException(infe);
+        } catch (DateIsGreaterThanNowException digtne) {
+            throw new InternalErrorException(digtne);
+        } catch (InvalidAttributeValueException iave) {
+            throw new InternalErrorException(iave);
         }
     }
 
@@ -710,17 +725,8 @@ public class VoDKATVChannels {
         VoDKATVChannels v = VoDKATVChannels.getInstance();
         try {
             v.globalSetUp(useMemcached);
-            v.setUp(1000);
-            Date d1 = new Date();
-            v.findChannelsInformation(10);
-            Date d2 = new Date();
-            v.findChannelsInformation(10);
-            Date d3 = new Date();
-            v.findChannelsInformation(10);
-            Date d4 = new Date();
-            System.out.println((d4.getTime() - d3.getTime()) + " | " +
-                    (d3.getTime() - d2.getTime()) + " | " +
-                    (d2.getTime() - d1.getTime()));
+            v.setUp(1);
+            System.out.println(v.findAllChannels());
         } catch(Exception e) {
             e.printStackTrace();
         } finally {

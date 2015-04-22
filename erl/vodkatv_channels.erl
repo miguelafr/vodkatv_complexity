@@ -267,7 +267,7 @@ measure_channels(N) ->
         {Time, _} = timer:tc(measure_java, measure_java,
             [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
             fun global_setup_channels/0, fun global_teardown_channels/0]),
-        io:format("measure_channels [~p]: ~p ms.~n", [Name, Time / 1000000]),
+        io:format("measure_channels [~p]: ~p secs.~n", [Name, Time / 1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).
 
@@ -285,7 +285,7 @@ measure_epg(N) ->
         {Time, _} = timer:tc(measure_java, measure_java,
             [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
             fun global_setup_epg/0, fun global_teardown_epg/0]),
-        io:format("measure_epg [~p]: ~p ms.~n", [Name, Time / 1000000]),
+        io:format("measure_epg [~p]: ~p secs.~n", [Name, Time / 1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).
 
@@ -304,7 +304,7 @@ measure_epg_memcached(N) ->
         {Time, _} = timer:tc(measure_java, measure_java,
             [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
             fun global_setup_memcached/0, fun global_teardown_memcached/0]),
-        io:format("measure_epg_memcached [~p]: ~p ms.~n", [Name, Time / 1000000]),
+        io:format("measure_epg_memcached [~p]: ~p secs.~n", [Name, Time / 1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).
 
@@ -323,7 +323,7 @@ measure_epg_memcached_warmup(N) ->
         {Time, _} = timer:tc(measure_java, measure_java,
             [1,  ?MAX_CHANNELS, Family, Axes, ClassPaths,
             fun global_setup_memcached/0, fun global_teardown_memcached/0]),
-        io:format("measure_epg_memcached_warmup [~p]: ~p ms.~n", [Name, Time / 1000000]),
+        io:format("measure_epg_memcached_warmup [~p]: ~p secs.~n", [Name, Time / 1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).
 
@@ -338,7 +338,7 @@ measure_http_jsp(N) ->
               #axes{size = fun measure_size_channels/1,
                     time = fun measure_time_http_jsp/1, repeat = 5,
                     name = Name}),
-        io:format("measure_http_jsp [~p]: ~p ms.~n",
+        io:format("measure_http_jsp [~p]: ~p secs.~n",
             [Name, timer:now_diff(now(), Now1)/1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).
@@ -354,7 +354,7 @@ measure_http_jersey(N) ->
               #axes{size = fun measure_size_channels/1,
                     time = fun measure_time_http_jersey/1, repeat = 5,
                     name = "jackson"}),
-        io:format("measure_http_jersey [~p]: ~p ms.~n",
+        io:format("measure_http_jersey [~p]: ~p secs.~n",
             [Name, timer:now_diff(now(), Now1)/1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).
@@ -370,7 +370,7 @@ measure_http_jsp_dummy(N) ->
               #axes{size = fun measure_size_channels/1,
                     time = fun measure_time_http_jsp_dummy/1, repeat = 5,
                     name = Name}),
-        io:format("measure_http_jsp_dummy [~p]: ~p ms.~n",
+        io:format("measure_http_jsp_dummy [~p]: ~p secs.~n",
             [Name, timer:now_diff(now(), Now1)/1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).
@@ -386,7 +386,7 @@ measure_http_jersey_dummy(N) ->
               #axes{size = fun measure_size_channels/1,
                     time = fun measure_time_http_jersey_dummy/1, repeat = 5,
                     name = Name}),
-        io:format("measure_http_jersey_dummy [~p]: ~p ms.~n",
+        io:format("measure_http_jersey_dummy [~p]: ~p secs.~n",
             [Name, timer:now_diff(now(), Now1)/1000000]),
         timer:sleep(5000)
     end, lists:seq(1, N)).

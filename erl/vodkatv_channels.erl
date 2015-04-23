@@ -353,7 +353,7 @@ measure_http_jersey(N) ->
               #family{initial = 0, grow = fun grow_channels/1},
               #axes{size = fun measure_size_channels/1,
                     time = fun measure_time_http_jersey/1, repeat = 5,
-                    name = "jackson"}),
+                    name = Name}),
         io:format("measure_http_jersey [~p]: ~p secs.~n",
             [Name, timer:now_diff(now(), Now1)/1000000]),
         timer:sleep(5000)

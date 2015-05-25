@@ -39,6 +39,8 @@ import com.lambdastream.tahiti.model.business.purchasefacade.delegate.AdminPurch
 import com.lambdastream.tahiti.model.business.purchasefacade.delegate.AdminPurchaseFacadeDelegateFactory;
 import com.lambdastream.tahiti.model.business.subscription.SubscriptionLimitType;
 import com.lambdastream.tahiti.model.business.subscription.SubscriptionRenovationType;
+import com.lambdastream.tahiti.model.cache.memcachedfacade.delegate.MemcachedFacadeDelegate;
+import com.lambdastream.tahiti.model.cache.memcachedfacade.delegate.MemcachedFacadeDelegateFactory;
 import com.lambdastream.tahiti.model.configuration.cacheserver.to.CacheServerTO;
 import com.lambdastream.tahiti.model.configuration.channelconfigfacade.delegate.ChannelConfigFacadeDelegate;
 import com.lambdastream.tahiti.model.configuration.channelconfigfacade.delegate.ChannelConfigFacadeDelegateFactory;
@@ -241,8 +243,18 @@ public class VoDKATVChannels {
         ConfigurationFacadeDelegate configurationFacadeDelegate =
                 ConfigurationFacadeDelegateFactory.getDelegate();
         configurationFacadeDelegate.deleteAllCacheServers();
-        configurationFacadeDelegate.createCacheServer(
-                new CacheServerTO(null, "10.121.55.32", new Integer(11211)));
+        CacheServerTO cacheServerTO = new CacheServerTO(null, "10.121.55.32",
+                new Integer(11211));
+        CacheServerTO createdCacheServerTO =
+                configurationFacadeDelegate.createCacheServer(cacheServerTO);
+        try {
+            configurationFacadeDelegate.updateCacheServer(createdCacheServerTO);
+        } catch (InstanceNotFoundException e) {
+            throw new InternalErrorException(e);
+        }
+        MemcachedFacadeDelegate memcachedFacadeDelegate =
+                MemcachedFacadeDelegateFactory.getDelegate();
+        memcachedFacadeDelegate.init();
     }
 
     private void initMetadataServer() throws InternalErrorException {
@@ -726,7 +738,9 @@ public class VoDKATVChannels {
         try {
             v.globalSetUp(useMemcached);
             v.setUp(1);
-            System.out.println(v.findAllChannels());
+            //System.out.println(
+                    v.findAllChannels();
+                    //);
         } catch(Exception e) {
             e.printStackTrace();
         } finally {
